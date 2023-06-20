@@ -1,8 +1,8 @@
 import json
 
 
-def test_embeddings_api(fastapi_client):
-    response = fastapi_client.post(
+def test_embeddings_api(authenticated_fastapi_client):
+    response = authenticated_fastapi_client.post(
         url="/v1/embeddings",
         data=json.dumps({"model": "e5-large-v2", "input": "hello world"}),
     )
@@ -26,6 +26,6 @@ def test_embeddings_api(fastapi_client):
             }
         ],
         "model": "e5_large_v2",
-        "usage": {"prompt_tokens": 5, "total_tokens": 5},
+        "usage": {"prompt_tokens": 4, "total_tokens": 4},
     }
-    assert expected_response ==  response_json
+    assert expected_response == response_json

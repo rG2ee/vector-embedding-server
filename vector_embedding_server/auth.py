@@ -1,10 +1,9 @@
-from typing import Optional
 from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -18,6 +17,7 @@ FAKE_USERS_DB = {
     }
 }
 
+
 def authenticate_user(fake_db, username: str, password: str):
     user = get_user(username)
     print(user)
@@ -28,10 +28,12 @@ def authenticate_user(fake_db, username: str, password: str):
         return False
     return user
 
+
 def get_user(username: str):
     if username in FAKE_USERS_DB:
         user_dict = FAKE_USERS_DB[username]
         return user_dict
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -40,5 +42,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, "SECRET_KEY", algorithm="HS256")  # Ersetzen Sie SECRET_KEY durch Ihren geheimen Schlüssel
+    encoded_jwt = jwt.encode(
+        to_encode, "SECRET_KEY", algorithm="HS256"
+    )  # Ersetzen Sie SECRET_KEY durch Ihren geheimen Schlüssel
     return encoded_jwt

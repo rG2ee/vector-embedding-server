@@ -1,6 +1,5 @@
 # copied mostly from https://huggingface.co/intfloat/e5-large-v2/blob/main/README.md
 
-import torch.nn.functional as F
 from torch import Tensor
 from transformers import AutoModel, AutoTokenizer
 
@@ -21,4 +20,4 @@ def predict(input_text: str) -> tuple[list[float], int]:
 
     outputs = model(**batch_dict)
     embeddings = average_pool(outputs.last_hidden_state, batch_dict["attention_mask"])
-    return embeddings.tolist()[0], len(tokenizer.all_special_ids)
+    return embeddings.tolist()[0], len(batch_dict["attention_mask"].H)

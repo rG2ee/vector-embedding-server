@@ -1,6 +1,6 @@
+import json
+
 import pytest
-from fastapi import Depends
-from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
 
 from vector_embedding_server.server import app
@@ -12,34 +12,15 @@ def fastapi_client():
     yield client
 
 
-"""
-
-@pytest.fixture()
-def disable_authentication(monkeypatch):
-    async def fake_has_access(
-            credentials: HTTPBasicCredentials = Depends(security),
-    ) -> None:
-        pass
-
-    app.dependency_overrides[has_access] = fake_has_access
-
-
-
 @pytest.fixture
-def fastapi_client_disabled_authentication(monkeypatch):
-    client = TestClient(app)
-
-    async def fake_has_access(
-            credentials: HTTPBasicCredentials = Depends(security),
-    ) -> None:
-        pass
-
-    app.dependency_overrides[has_access] = fake_has_access
-    client.headers = {
-        "Authorization": (
-            "Bearer This is an invalid code. Use `disable_authentication`"
-            " or `fastapi_client_disabled_authentication` fixture."
-        )
+def authenticated_fastapi_client(fastapi_client):
+    # Replace with valid credentials for your application
+    credentials = {
+        "username": "BCH",  # valid username
+        "password": "dainty-dumpling-charger-unruffled-hardy",  # valid password
     }
-    yield client
-"""
+
+    response = fastapi_client.post("/token", data=json.dumps(credentials))
+    access_token = response.json()["access_token"]
+    fastapi_client.headers.update({"Authorization": f"Bearer {access_token}"})
+    yield fastapi_client

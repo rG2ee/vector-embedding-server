@@ -1,27 +1,27 @@
-import os
+from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
-from fastapi import FastAPI, Query, Request, Depends, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
-from datetime import datetime, timedelta
-from vector_embedding_server.auth import authenticate_user, create_access_token, FAKE_USERS_DB, OAuth2PasswordRequestForm, get_user
+from jose import JWTError, jwt
+from pydantic import BaseModel
 
+from vector_embedding_server.auth import (
+    FAKE_USERS_DB,
+    authenticate_user,
+    create_access_token,
+    get_user,
+)
+from vector_embedding_server.e5_large_v2 import predict as e5_large_v2_predict
 from vector_embedding_server.openai_like_api_models import (
-    EmbeddingResponse,
-    EmbeddingInput,
-    ModelName,
     EmbeddingData,
+    EmbeddingInput,
+    EmbeddingResponse,
+    ModelName,
     Usage,
 )
-from vector_embedding_server import e5_large_v2
-from pydantic import BaseModel
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -31,7 +31,6 @@ app = FastAPI(title="Vector Embedding Server", docs_url=None)
 
 
 class Credentials(BaseModel):
-
     username: str
     password: str
 
@@ -54,10 +53,11 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
     print("username:udirtae", username)
-    user = get_user(username)  # Hier sollten Sie die Funktion zur Abrufung des Benutzers aus Ihrer Benutzerdatenbank aufrufen
+    user = get_user(username)
     if user is None:
         raise credentials_exception
     return user
+
 
 @app.post("/token")
 def login(credentials: Credentials):
@@ -76,11 +76,13 @@ def login(credentials: Credentials):
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
-async def create_embedding(embedding_input: EmbeddingInput, current_user: str = Depends(get_current_user)):
+async def create_embedding(
+    embedding_input: EmbeddingInput, current_user: str = Depends(get_current_user)
+):
     if embedding_input.model == ModelName.e5_large_v2:
-        embedding, prompt_tokens = e5_large_v2.predict(embedding_input.input)
+        embedding, prompt_tokens = e5_large_v2_predict(embedding_input.input)
     else:
-        raise NotImplemented
+        raise NotImplementedError
 
     embedding_data = EmbeddingData(
         object="embedding",
