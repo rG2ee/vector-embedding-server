@@ -23,7 +23,7 @@ class EmbeddingResponse(BaseModel):
 
 
 class ModelName(str, Enum):
-    e5_large_v2 = "e5-large-v2"
+    e5_large_v2 = "text-embedding-ada-002"
 
 
 class EmbeddingInput(BaseModel):

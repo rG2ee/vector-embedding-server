@@ -94,7 +94,7 @@ async def create_embedding(
     usage = Usage(prompt_tokens=prompt_tokens, total_tokens=prompt_tokens)
 
     embedding_response = EmbeddingResponse(
-        model=embedding_input.model.name,
+        model=embedding_input.model.value,
         object="list",
         data=[embedding_data],
         usage=usage,
