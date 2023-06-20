@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
@@ -18,7 +18,9 @@ FAKE_USERS_DB = {
 }
 
 
-def authenticate_user(fake_db, username: str, password: str):
+def authenticate_user(
+    fake_db: dict[str, Any], username: str, password: str
+) -> dict[str, Any] | bool:
     user = get_user(username)
     print(user)
     print(password)
@@ -29,13 +31,16 @@ def authenticate_user(fake_db, username: str, password: str):
     return user
 
 
-def get_user(username: str):
+def get_user(username: str) -> Optional[dict[str, Any]]:
     if username in FAKE_USERS_DB:
         user_dict = FAKE_USERS_DB[username]
         return user_dict
+    return None
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(
+    data: dict[str, Any], expires_delta: Optional[timedelta] = None
+) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
