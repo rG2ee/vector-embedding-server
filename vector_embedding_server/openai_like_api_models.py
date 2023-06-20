@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import List
 
 from pydantic import BaseModel
@@ -22,10 +21,6 @@ class EmbeddingResponse(BaseModel):
     usage: Usage
 
 
-class ModelName(str, Enum):
-    e5_large_v2 = "text-embedding-ada-002"
-
-
 class EmbeddingInput(BaseModel):
-    model: ModelName
+    model: str
     input: str

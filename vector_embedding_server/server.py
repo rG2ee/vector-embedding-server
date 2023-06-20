@@ -20,7 +20,6 @@ from vector_embedding_server.openai_like_api_models import (
     EmbeddingData,
     EmbeddingInput,
     EmbeddingResponse,
-    ModelName,
     Usage,
 )
 
@@ -80,10 +79,7 @@ def login(credentials: Credentials) -> dict[str, str]:
 async def create_embedding(
     embedding_input: EmbeddingInput, current_user: str = Depends(get_current_user)
 ) -> EmbeddingResponse:
-    if embedding_input.model == ModelName.e5_large_v2:
-        embedding, prompt_tokens = e5_large_v2_predict(embedding_input.input)
-    else:
-        raise NotImplementedError
+    embedding, prompt_tokens = e5_large_v2_predict(embedding_input.input)
 
     embedding_data = EmbeddingData(
         object="embedding",
@@ -94,7 +90,7 @@ async def create_embedding(
     usage = Usage(prompt_tokens=prompt_tokens, total_tokens=prompt_tokens)
 
     embedding_response = EmbeddingResponse(
-        model=embedding_input.model.value,
+        model="text-embedding-ada-002",
         object="list",
         data=[embedding_data],
         usage=usage,
