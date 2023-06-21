@@ -1,14 +1,20 @@
+import os
 from datetime import datetime, timedelta
 from typing import Any, Callable, Optional
 
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
+load_dotenv()
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 
 
 class User(BaseModel):
@@ -47,9 +53,7 @@ def create_access_token(
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, "SECRET_KEY", algorithm="HS256"
-    )  # Ersetzen Sie SECRET_KEY durch Ihren geheimen Schlüssel
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 
@@ -60,7 +64,7 @@ def get_current_user(db: dict[str, User], token: str = Depends(oauth2_scheme)) -
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
         username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception

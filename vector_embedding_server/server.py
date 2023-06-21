@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -18,10 +20,17 @@ from vector_embedding_server.openai_like_api_models import (
     Usage,
 )
 
+load_dotenv()
+
+
+USERNAME = os.environ["USERNAME"]
+HASHED_PASSWORD = os.environ["HASHED_PASSWORD"]
+
+
 FAKE_USERS_DB = {
-    "BCH": User(
-        username="BCH",
-        hashed_password="$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK",
+    USERNAME: User(
+        username=USERNAME,
+        hashed_password=HASHED_PASSWORD,
         disabled=False,
     )
 }
