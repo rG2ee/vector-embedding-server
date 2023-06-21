@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -15,6 +15,11 @@ class User(BaseModel):
     username: str
     hashed_password: str
     disabled: bool
+
+
+class Credentials(BaseModel):
+    username: str
+    password: str
 
 
 def authenticate_user(db: dict[str, User], username: str, password: str) -> User:
@@ -46,3 +51,46 @@ def create_access_token(
         to_encode, "SECRET_KEY", algorithm="HS256"
     )  # Ersetzen Sie SECRET_KEY durch Ihren geheimen Schlüssel
     return encoded_jwt
+
+
+def get_current_user(db: dict[str, User], token: str = Depends(oauth2_scheme)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
+        username: str | None = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    user = get_user(db, username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+def login_user(db: dict[str, User], credentials: Credentials) -> dict[str, str]:
+    try:
+        user = authenticate_user(db, credentials.username, credentials.password)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=15)
+    access_token = create_access_token(
+        data={"sub": user.username},
+        expires_delta=access_token_expires,
+    )
+    return {"access_token": access_token}
+
+
+def get_current_user_wrapper(db: dict[str, User]) -> Callable[[str], User]:
+    def _get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+        return get_current_user(db, token)
+
+    return _get_current_user
