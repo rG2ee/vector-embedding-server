@@ -9,7 +9,6 @@ from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from vector_embedding_server.auth import (
-    FAKE_USERS_DB,
     User,
     authenticate_user,
     create_access_token,
@@ -22,6 +21,15 @@ from vector_embedding_server.openai_like_api_models import (
     EmbeddingResponse,
     Usage,
 )
+
+FAKE_USERS_DB = {
+    "BCH": User(
+        username="BCH",
+        hashed_password="$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK",
+        disabled=False,
+    )
+}
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -51,7 +59,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = get_user(username)
+    user = get_user(FAKE_USERS_DB, username)
     if user is None:
         raise credentials_exception
     return user
@@ -59,8 +67,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
 @app.post("/token")
 def login(credentials: Credentials) -> dict[str, str]:
-    user = authenticate_user(FAKE_USERS_DB, credentials.username, credentials.password)
-    if not user:
+    try:
+        user = authenticate_user(FAKE_USERS_DB, credentials.username, credentials.password)
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -68,7 +77,8 @@ def login(credentials: Credentials) -> dict[str, str]:
         )
     access_token_expires = timedelta(minutes=15)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires  # type: ignore
+        data={"sub": user.username},
+        expires_delta=access_token_expires,
     )
     return {"access_token": access_token}
 

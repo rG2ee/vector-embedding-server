@@ -17,29 +17,18 @@ class User(BaseModel):
     disabled: bool
 
 
-FAKE_USERS_DB = {
-    "BCH": User(
-        username="BCH",
-        hashed_password="$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK",
-        disabled=False,
-    )
-}
-
-
-def authenticate_user(
-    fake_db: dict[str, Any], username: str, password: str
-) -> User | bool:
-    user = get_user(username)
+def authenticate_user(db: dict[str, User], username: str, password: str) -> User:
+    user = get_user(db, username)
     if not user:
-        return False
+        raise ValueError("no user found")
     if not pwd_context.verify(password, user.hashed_password):
-        return False
+        raise ValueError("invalid password")
     return user
 
 
-def get_user(username: str) -> Optional[User]:
-    if username in FAKE_USERS_DB:
-        user = FAKE_USERS_DB[username]
+def get_user(db: dict[str, User], username: str) -> Optional[User]:
+    if username in db:
+        user = db[username]
         return user
     return None
 
