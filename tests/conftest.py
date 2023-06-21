@@ -20,7 +20,7 @@ def authenticated_fastapi_client(fastapi_client):
         "password": "dainty-dumpling-charger-unruffled-hardy",  # valid password
     }
 
-    response = fastapi_client.post("/token", data=json.dumps(credentials))
+    response = fastapi_client.post("/token", content=json.dumps(credentials))
     access_token = response.json()["access_token"]
     fastapi_client.headers.update({"Authorization": f"Bearer {access_token}"})
     yield fastapi_client

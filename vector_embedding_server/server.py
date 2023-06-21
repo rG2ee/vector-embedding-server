@@ -79,20 +79,28 @@ def login(credentials: Credentials) -> dict[str, str]:
 async def create_embedding(
     embedding_input: EmbeddingInput, current_user: str = Depends(get_current_user)
 ) -> EmbeddingResponse:
-    embedding, prompt_tokens = e5_large_v2_predict(embedding_input.input)
+    request_input: list[str]
+    if isinstance(embedding_input.input, str):
+        request_input = [embedding_input.input]
+    else:
+        request_input = embedding_input.input
+    embeddings, prompt_tokens = e5_large_v2_predict(request_input)
 
-    embedding_data = EmbeddingData(
-        object="embedding",
-        embedding=embedding,
-        index=0,
-    )
+    embeddings_data = [
+        EmbeddingData(
+            object="embedding",
+            embedding=embedding,
+            index=idx,
+        )
+        for (idx, embedding) in enumerate(embeddings)
+    ]
 
     usage = Usage(prompt_tokens=prompt_tokens, total_tokens=prompt_tokens)
 
     embedding_response = EmbeddingResponse(
         model="text-embedding-ada-002",
         object="list",
-        data=[embedding_data],
+        data=embeddings_data,
         usage=usage,
     )
     return embedding_response

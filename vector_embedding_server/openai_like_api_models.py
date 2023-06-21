@@ -1,11 +1,9 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
 class EmbeddingData(BaseModel):
     object: str
-    embedding: List[float]
+    embedding: list[float]
     index: int
 
 
@@ -16,11 +14,11 @@ class Usage(BaseModel):
 
 class EmbeddingResponse(BaseModel):
     object: str
-    data: List[EmbeddingData]
+    data: list[EmbeddingData]
     model: str
     usage: Usage
 
 
 class EmbeddingInput(BaseModel):
     model: str
-    input: str
+    input: str | list[str]
