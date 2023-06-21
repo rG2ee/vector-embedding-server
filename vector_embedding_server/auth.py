@@ -4,37 +4,43 @@ from typing import Any, Optional
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from passlib.context import CryptContext
+from pydantic import BaseModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
+class User(BaseModel):
+    username: str
+    hashed_password: str
+    disabled: bool
+
+
 FAKE_USERS_DB = {
-    "BCH": {
-        "username": "BCH",
-        "hashed_password": "$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK",
-        "disabled": False,
-    }
+    "BCH": User(
+        username="BCH",
+        hashed_password="$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK",
+        disabled=False,
+    )
 }
 
 
 def authenticate_user(
     fake_db: dict[str, Any], username: str, password: str
-) -> dict[str, Any] | bool:
+) -> User | bool:
     user = get_user(username)
-    print(user)
-    print(password)
     if not user:
         return False
-    if not pwd_context.verify(password, user["hashed_password"]):
+    if not pwd_context.verify(password, user.hashed_password):
         return False
     return user
 
 
-def get_user(username: str) -> Optional[dict[str, Any]]:
+def get_user(username: str) -> Optional[User]:
     if username in FAKE_USERS_DB:
-        user_dict = FAKE_USERS_DB[username]
-        return user_dict
+        user = FAKE_USERS_DB[username]
+        return user
     return None
 
 
