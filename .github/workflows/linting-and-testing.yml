@@ -13,6 +13,8 @@ jobs:
 
     env:
       JWT_SECRET_KEY: "my-super-secret-key"
+      USERNAME: "BCH"
+      HASHED_PASSWORD: "$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK"
 
     steps:
       - uses: actions/checkout@v2
