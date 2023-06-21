@@ -11,6 +11,9 @@ jobs:
     name: Automatic linting and testing
     runs-on: ubuntu-latest
 
+    env:
+      JWT_SECRET_KEY: "my-super-secret-key"
+
     steps:
       - uses: actions/checkout@v2
 
