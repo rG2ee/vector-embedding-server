@@ -1,11 +1,12 @@
 import json
 import os
 from pathlib import Path
+from typing import Iterator, cast
 
-import requests
+import openai
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from vector_embedding_server.auth import (
@@ -23,6 +24,7 @@ from vector_embedding_server.openai_like_api_models import (
     EmbeddingResponse,
     Usage,
 )
+from vector_embedding_server.streaming_models import ChatCompletionStreamingResponse
 
 load_dotenv()
 
@@ -30,6 +32,9 @@ load_dotenv()
 USERNAME = os.environ["USERNAME"]
 HASHED_PASSWORD = os.environ["HASHED_PASSWORD"]
 LANGUAGE_MODEL_SERVER = os.environ["LANGUAGE_MODEL_SERVER"]
+
+openai.api_base = f"{LANGUAGE_MODEL_SERVER}/v1"
+openai.api_key = "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"
 
 
 FAKE_USERS_DB = {
@@ -84,16 +89,30 @@ async def create_embedding(
 
 
 @app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
-def chat_completion_proxy(
+async def chat_completion_proxy(
     chat_completion_input: ChatCompletionInput,
     current_user: str = Depends(get_current_user_wrapper(FAKE_USERS_DB)),
 ) -> ChatCompletionResponse:
-    response = requests.post(
-        url=f"{LANGUAGE_MODEL_SERVER}/v1/chat/completions",
-        json=json.loads(chat_completion_input.json()),
+    response = openai.ChatCompletion.create(  # type: ignore
+        **json.loads(chat_completion_input.json())
     )
-    response.raise_for_status()
-    return ChatCompletionResponse.parse_obj(response.json())
+    if not chat_completion_input.stream:
+        return ChatCompletionResponse(**response)
+
+    def event_stream() -> Iterator[bytes]:
+        for chunk in response:
+            resp = ChatCompletionStreamingResponse(**chunk)
+            if resp.choices[0].finish_reason is None:
+                yield ("data: " + resp.json() + "\r\n\r\n").encode("utf-8")
+            else:
+                yield ("data: " + resp.json() + "\r\n\r\ndata: [DONE]\r\n\r\n").encode(
+                    "utf-8"
+                )
+
+    return cast(
+        ChatCompletionResponse,
+        StreamingResponse(event_stream(), media_type="text/event-stream"),
+    )
 
 
 @app.get("/docs", response_class=HTMLResponse)

@@ -15,6 +15,10 @@ class Usage(BaseModel):
     total_tokens: int
 
 
+class CompletionUsage(Usage):
+    completion_tokens: int
+
+
 class EmbeddingResponse(BaseModel):
     object: str
     data: list[EmbeddingData]
@@ -85,4 +89,4 @@ class ChatCompletionResponse(BaseModel):
     created: int
 
     choices: list[Choice]
-    usage: Usage
+    usage: CompletionUsage
