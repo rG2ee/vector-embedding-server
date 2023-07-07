@@ -1,6 +1,8 @@
+import json
 import os
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -14,6 +16,8 @@ from vector_embedding_server.auth import (
 )
 from vector_embedding_server.e5_large_v2 import predict as e5_large_v2_predict
 from vector_embedding_server.openai_like_api_models import (
+    ChatCompletionInput,
+    ChatCompletionResponse,
     EmbeddingData,
     EmbeddingInput,
     EmbeddingResponse,
@@ -25,6 +29,7 @@ load_dotenv()
 
 USERNAME = os.environ["USERNAME"]
 HASHED_PASSWORD = os.environ["HASHED_PASSWORD"]
+LANGUAGE_MODEL_SERVER = os.environ["LANGUAGE_MODEL_SERVER"]
 
 
 FAKE_USERS_DB = {
@@ -76,6 +81,19 @@ async def create_embedding(
         usage=usage,
     )
     return embedding_response
+
+
+@app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
+def chat_completion_proxy(
+    chat_completion_input: ChatCompletionInput,
+    current_user: str = Depends(get_current_user_wrapper(FAKE_USERS_DB)),
+) -> ChatCompletionResponse:
+    response = requests.post(
+        url=f"{LANGUAGE_MODEL_SERVER}/v1/chat/completions",
+        json=json.loads(chat_completion_input.json()),
+    )
+    response.raise_for_status()
+    return ChatCompletionResponse.parse_obj(response.json())
 
 
 @app.get("/docs", response_class=HTMLResponse)
