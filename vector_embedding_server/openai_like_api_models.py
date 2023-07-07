@@ -25,6 +25,17 @@ class EmbeddingInput(BaseModel):
     model: str
     input: str | list[str]
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "model": "e5-large",
+                "input": [
+                    "Query1",
+                    "Query2",
+                ],
+            },
+        }
+
 
 class MessageRole(str, Enum):
     SYSTEM = "system"
