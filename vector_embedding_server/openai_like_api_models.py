@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -58,6 +59,13 @@ class Choice(BaseModel):
 class ChatCompletionInput(BaseModel):
     model: str
     messages: list[Message]
+
+    temperature: Optional[int]
+    top_p: Optional[int]
+    n: Optional[int]
+    stream: Optional[bool]
+    stop: Optional[str | list[str]]
+    max_tokens: Optional[int]
 
     class Config:
         schema_extra = {
