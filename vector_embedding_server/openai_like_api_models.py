@@ -69,7 +69,7 @@ class ChatCompletionInput(BaseModel):
     n: Optional[int]
     stream: Optional[bool]
     stop: Optional[str | list[str]]
-    max_tokens: Optional[int]
+    max_tokens: int = 2048
 
     class Config:
         schema_extra = {
