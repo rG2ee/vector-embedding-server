@@ -15,6 +15,7 @@ jobs:
       JWT_SECRET_KEY: "my-super-secret-key"
       USERNAME: "BCH"
       HASHED_PASSWORD: "$2b$12$YP6UgESiJ6.3c0EwnxNEnu9Ts075Jz82AcqawG7fxvFiMSUgs6cWK"
+      LANGUAGE_MODEL_SERVER: "http://192.168.1.55:5001"
 
     steps:
       - uses: actions/checkout@v2
