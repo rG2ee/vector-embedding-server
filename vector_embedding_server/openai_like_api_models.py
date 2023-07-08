@@ -90,3 +90,15 @@ class ChatCompletionResponse(BaseModel):
 
     choices: list[Choice]
     usage: CompletionUsage
+
+
+class Model(BaseModel):
+    id: str
+    object: str
+    owned_by: str
+    permission: list[str]
+
+
+class ModelsResponse(BaseModel):
+    object: str
+    data: list[Model]

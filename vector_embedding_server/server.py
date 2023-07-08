@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterator, cast
 
 import openai
+import requests
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -22,6 +23,7 @@ from vector_embedding_server.openai_like_api_models import (
     EmbeddingData,
     EmbeddingInput,
     EmbeddingResponse,
+    ModelsResponse,
     Usage,
 )
 from vector_embedding_server.streaming_models import ChatCompletionStreamingResponse
@@ -113,6 +115,15 @@ async def chat_completion_proxy(
         ChatCompletionResponse,
         StreamingResponse(event_stream(), media_type="text/event-stream"),
     )
+
+
+@app.get("/v1/models", response_model=ModelsResponse)
+async def get_models(
+    current_user: str = Depends(get_current_user_wrapper(FAKE_USERS_DB)),
+) -> ModelsResponse:
+    response = requests.get(f"{LANGUAGE_MODEL_SERVER}/v1/models")
+    response.raise_for_status()
+    return ModelsResponse(**response.json())
 
 
 @app.get("/docs", response_class=HTMLResponse)
